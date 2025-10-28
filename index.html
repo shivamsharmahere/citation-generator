@@ -150,7 +150,7 @@
                     </div>
                     <div>
                         <h1 class="text-3xl font-bold text-gray-900">Real Academic Citation Generator</h1>
-                        <p class="text-sm text-gray-600 mt-1">Powered by 11 Free Academic APIs with AI-Enhanced Relevance Scoring</p>
+                        <p class="text-sm text-gray-600 mt-1">Powered by 7 Free Academic APIs (+ 4 Premium) with AI-Enhanced Relevance Scoring</p>
                     </div>
                 </div>
                 <div class="flex items-center space-x-4">
@@ -295,7 +295,7 @@
 
                     <!-- API Sources -->
                     <div class="mt-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Search Sources (11 APIs)</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Search Sources (7 Free APIs + 4 Premium)</label>
                         <div class="grid grid-cols-3 gap-3">
                             <label class="flex items-center space-x-2 text-sm">
                                 <input type="checkbox" id="useSemanticScholar" checked class="rounded text-blue-600 focus:ring-blue-500">
@@ -322,24 +322,24 @@
                                 <span>PubMed Central</span>
                             </label>
                             <label class="flex items-center space-x-2 text-sm">
-                                <input type="checkbox" id="useSSRN" checked class="rounded text-blue-600 focus:ring-blue-500">
-                                <span>SSRN</span>
+                                <input type="checkbox" id="useSSRN" class="rounded text-blue-600 focus:ring-blue-500" disabled title="SSRN requires API key authentication">
+                                <span class="text-gray-400" title="SSRN requires API key authentication">SSRN (requires API key)</span>
                             </label>
                             <label class="flex items-center space-x-2 text-sm">
                                 <input type="checkbox" id="usePhilPapers" checked class="rounded text-blue-600 focus:ring-blue-500">
                                 <span>PhilPapers</span>
                             </label>
                             <label class="flex items-center space-x-2 text-sm">
-                                <input type="checkbox" id="useCORE" checked class="rounded text-blue-600 focus:ring-blue-500">
-                                <span>CORE</span>
+                                <input type="checkbox" id="useCORE" class="rounded text-blue-600 focus:ring-blue-500" disabled title="CORE requires API key for v3">
+                                <span class="text-gray-400" title="CORE requires API key for v3">CORE (requires API key)</span>
                             </label>
                             <label class="flex items-center space-x-2 text-sm">
-                                <input type="checkbox" id="useUnpaywall" checked class="rounded text-blue-600 focus:ring-blue-500">
-                                <span>Unpaywall</span>
+                                <input type="checkbox" id="useUnpaywall" class="rounded text-blue-600 focus:ring-blue-500" disabled title="Unpaywall requires DOI lookup">
+                                <span class="text-gray-400" title="Unpaywall requires DOI lookup">Unpaywall (DOI only)</span>
                             </label>
                             <label class="flex items-center space-x-2 text-sm">
-                                <input type="checkbox" id="useIEEE" checked class="rounded text-blue-600 focus:ring-blue-500">
-                                <span>IEEE Xplore</span>
+                                <input type="checkbox" id="useIEEE" class="rounded text-blue-600 focus:ring-blue-500" disabled title="IEEE Xplore requires API key">
+                                <span class="text-gray-400" title="IEEE Xplore requires API key">IEEE (requires API key)</span>
                             </label>
                         </div>
                     </div>

@@ -12,7 +12,9 @@ This tool takes **YOUR text** and adds **REAL academic citations** from actual p
 5. **Smart citations are added** with optimal placement and quality indicators
 6. **You get your text back** with high-quality, verifiable academic references
 
-## 🔑 11 Free Academic APIs Integrated
+## 🔑 Academic APIs Integrated (7 Free + 4 Premium)
+
+### Free APIs (No Authentication Required) ✅
 
 ### 1. **Semantic Scholar API** ⭐ Recommended
 - **URL**: https://api.semanticscholar.org/
@@ -83,9 +85,26 @@ This tool takes **YOUR text** and adds **REAL academic citations** from actual p
 
 ### 8-11. **Additional APIs**
 - **SSRN**: Working papers and early research
-- **CORE**: Open access repository aggregator
-- **Unpaywall**: Free full-text finder
-- **IEEE Xplore**: Select free technical papers
+
+### Premium APIs (Require Authentication) 🔒
+
+These APIs are integrated in the codebase but require API keys to function:
+
+- **SSRN API**: Social Science Research Network - requires API key
+  - Working papers and preprints
+  - Social sciences focus
+  
+- **CORE API**: Open access research aggregator - requires API key for v3
+  - 250M+ open access papers
+  - Repository aggregation
+
+- **Unpaywall API**: Free full-text finder - requires DOI-based lookup
+  - Finds open access versions of papers
+  - Works as supplement to other APIs
+
+- **IEEE Xplore API**: Engineering and technology papers - requires API key
+  - Select free papers available
+  - Technical and engineering focus
 
 ## 🚀 How to Use
 
@@ -132,7 +151,7 @@ Each citation includes quality indicators:
 - ✅ Quality metrics ensure high-relevance citations
 
 ### Search Options
-- 🔍 **11 Academic APIs** - Maximum coverage across disciplines
+- 🔍 **7 Free Academic APIs + 4 Premium** - Maximum coverage across disciplines
 - 🔍 Semantic Scholar - Best for citation counts and comprehensive metadata
 - 🔍 OpenAlex - Best overall coverage (250M+ works)
 - 🔍 CrossRef - Best for DOI links and traditional journals
@@ -317,8 +336,8 @@ The tool includes:
 - ✅ DOAJ - 20,000+ free open access journals
 - ✅ PubMed Central - Medical/life sciences papers
 - ✅ PhilPapers API - Philosophy and humanities
-- ✅ SSRN, CORE, Unpaywall, IEEE (with authentication notes)
-- ✅ Total: 11 academic APIs supported
+- ✅ SSRN, CORE, Unpaywall, IEEE (require API keys - disabled by default)
+- ✅ Total: 7 free + 4 premium APIs = 11 total APIs integrated
 
 **Phase 2: Intelligent Citation Matching** ✅ COMPLETE
 - ✅ Sentence semantic analysis using keyword extraction
@@ -340,7 +359,7 @@ The tool includes:
 - ✅ Open access indicators
 
 ### 📊 Success Criteria Achievement
-- ✅ Support 11 free academic APIs (exceeded 8+ requirement)
+- ✅ Support 11 academic APIs (7 free, 4 premium - exceeded 8+ requirement)
 - ✅ Semantic sentence analysis with TF-IDF
 - ✅ Relevance scores with accurate matching
 - ✅ Optimal citation placement at sentence boundaries
@@ -380,8 +399,9 @@ This project uses **free, open academic APIs**. All citations are real and verif
 - ✅ **AI-Enhanced Matching** - relevance scored using TF-IDF algorithms
 - ✅ **Quality Metrics** - every citation rated for relevance, credibility, freshness
 - ✅ **No fake data** - if no papers found, sentence gets no citation
-- ✅ **Free to use** - all APIs are free and open (some have optional keys)
-- ✅ **11 APIs** - maximum coverage across all academic disciplines
+- ✅ **7 Free APIs** - no authentication required for core functionality
+- ✅ **4 Premium APIs** - available with API keys for extended coverage
+- ✅ **11 Total APIs** - maximum coverage across all academic disciplines
 
 ## 📄 License
 
@@ -406,4 +426,4 @@ If you use this tool for academic work, please ensure:
 
 ---
 
-**Made with 11 real academic APIs** • **AI-Enhanced Relevance Scoring** • **Quality Metrics for Every Citation** • **All DOIs Verified**
+**Made with 11 academic APIs (7 free + 4 premium)** • **AI-Enhanced Relevance Scoring** • **Quality Metrics for Every Citation** • **All DOIs Verified**
