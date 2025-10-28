@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real Academic Citation Generator - Semantic Scholar, CrossRef, arXiv</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        
+        .cited-sentence {
+            background: linear-gradient(to right, transparent 0%, #f0fdf4 2%, #f0fdf4 98%, transparent 100%);
+            padding: 4px 0;
+            margin: 8px 0;
+            border-left: 3px solid #10b981;
+            padding-left: 8px;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+        
+        .cited-sentence:hover {
+            background: #dcfce7;
+            border-left-width: 4px;
+        }
+        
+        .citation-number {
+            display: inline-block;
+            color: #2563eb;
+            font-weight: 600;
+            cursor: pointer;
+            vertical-align: super;
+            font-size: 0.85em;
+            padding: 0 2px;
+            transition: all 0.2s ease;
+        }
+        
+        .citation-number:hover {
+            color: #1d4ed8;
+            text-decoration: underline;
+            background: #dbeafe;
+            border-radius: 2px;
+            padding: 1px 4px;
+        }
+        
+        .reference-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .reference-card:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .doi-link {
+            color: #059669;
+            text-decoration: none;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .doi-link:hover {
+            color: #047857;
+            text-decoration: underline;
+        }
+        
+        .api-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .api-status.active {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .api-status.inactive {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .search-progress {
+            background: #f3f4f6;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 8px;
+        }
+        
+        .progress-bar {
+            background: #e5e7eb;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            height: 100%;
+            transition: width 0.3s ease;
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+        
+        .sentence-number {
+            display: inline-block;
+            width: 30px;
+            color: #9ca3af;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        @media print {
+            .no-print { display: none !important; }
+            .cited-sentence { 
+                background: none;
+                border-left: none;
+                padding-left: 0;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-50 min-h-screen">
+    
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="bg-blue-600 p-3 rounded-lg">
+                        <i class="fas fa-quote-right text-white text-2xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-900">Real Academic Citation Generator</h1>
+                        <p class="text-sm text-gray-600 mt-1">Powered by Semantic Scholar • CrossRef • arXiv</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="api-status active" id="apiStatus">
+                        <i class="fas fa-circle text-xs"></i>
+                        APIs Ready
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- API Configuration (Optional) -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8 no-print">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-gray-900">
+                    <i class="fas fa-key mr-2 text-blue-600"></i>
+                    API Configuration (Optional - Free APIs work without keys)
+                </h2>
+                <button onclick="toggleAPIConfig()" class="text-sm text-blue-600 hover:text-blue-700">
+                    <i class="fas fa-cog mr-1"></i>Configure
+                </button>
+            </div>
+            
+            <div id="apiConfig" class="hidden space-y-4">
+                <div class="bg-blue-50 rounded-lg p-4">
+                    <p class="text-sm text-gray-700 mb-3">
+                        <i class="fas fa-info-circle text-blue-600 mr-2"></i>
+                        <strong>All these APIs are FREE and work without API keys!</strong> You can optionally add keys for higher rate limits.
+                    </p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Semantic Scholar API Key (Optional)
+                                <a href="https://www.semanticscholar.org/product/api" target="_blank" class="text-blue-600 ml-2">
+                                    <i class="fas fa-external-link-alt text-xs"></i>
+                                </a>
+                            </label>
+                            <input type="text" id="semanticScholarKey" placeholder="Not required - works without key"
+                                   class="w-full px-4 py-2 border rounded-lg">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                CrossRef Email (Polite Pool)
+                                <a href="https://www.crossref.org/documentation/retrieve-metadata/rest-api/" target="_blank" class="text-blue-600 ml-2">
+                                    <i class="fas fa-external-link-alt text-xs"></i>
+                                </a>
+                            </label>
+                            <input type="email" id="crossrefEmail" placeholder="your@email.com for faster responses"
+                                   class="w-full px-4 py-2 border rounded-lg">
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3 text-xs text-gray-600">
+                        <strong>Note:</strong> arXiv API is completely free and requires no authentication.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Section -->
+        <div class="bg-white rounded-xl shadow-lg p-8 mb-8 no-print">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">
+                    <i class="fas fa-paste mr-2 text-blue-600"></i>
+                    Input Your Text
+                </h2>
+                <span class="text-sm text-gray-500">Paste text that needs real citations</span>
+            </div>
+
+            <div class="space-y-6">
+                <!-- Text Input -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Your Text (Each sentence will get real academic citations)
+                    </label>
+                    <textarea 
+                        id="inputText" 
+                        placeholder="Paste your text here. Each sentence will be analyzed and matched with REAL academic papers from Semantic Scholar, CrossRef, and arXiv with verified DOI links.&#10;&#10;Example:&#10;Machine learning has revolutionized healthcare diagnostics. Deep learning algorithms can detect diseases from medical images with high accuracy. Natural language processing is being used to analyze patient records."
+                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                        rows="12"
+                        style="font-family: 'Inter', sans-serif; font-size: 15px; line-height: 1.8;"
+                    ></textarea>
+                    <div class="flex justify-between items-center mt-2">
+                        <span class="text-sm text-gray-500">
+                            <span id="charCount">0</span> characters • 
+                            <span id="sentenceCount">0</span> sentences detected
+                        </span>
+                        <button onclick="clearInput()" class="text-sm text-red-600 hover:text-red-700">
+                            <i class="fas fa-times mr-1"></i>Clear
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Settings -->
+                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6">
+                    <h3 class="font-semibold text-gray-900 mb-4">
+                        <i class="fas fa-cog mr-2 text-blue-600"></i>
+                        Citation Settings
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- Citation Style -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Citation Style</label>
+                            <select id="citationStyle" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500">
+                                <option value="apa">APA 7th Edition</option>
+                                <option value="mla">MLA 9th Edition</option>
+                                <option value="chicago">Chicago 17th</option>
+                                <option value="harvard">Harvard</option>
+                                <option value="ieee">IEEE</option>
+                                <option value="vancouver">Vancouver</option>
+                            </select>
+                        </div>
+
+                        <!-- Year Range -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Publication Year</label>
+                            <select id="yearRange" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500">
+                                <option value="5">Last 5 years</option>
+                                <option value="10">Last 10 years</option>
+                                <option value="15">Last 15 years</option>
+                                <option value="all">All years</option>
+                            </select>
+                        </div>
+
+                        <!-- Results per sentence -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Citations per Sentence</label>
+                            <select id="citationsPerSentence" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500">
+                                <option value="1">1 citation</option>
+                                <option value="2">2 citations</option>
+                                <option value="3">3 citations</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- API Sources -->
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Search Sources</label>
+                        <div class="grid grid-cols-3 gap-3">
+                            <label class="flex items-center space-x-2 text-sm">
+                                <input type="checkbox" id="useSemanticScholar" checked class="rounded text-blue-600 focus:ring-blue-500">
+                                <span>Semantic Scholar</span>
+                            </label>
+                            <label class="flex items-center space-x-2 text-sm">
+                                <input type="checkbox" id="useCrossRef" checked class="rounded text-blue-600 focus:ring-blue-500">
+                                <span>CrossRef</span>
+                            </label>
+                            <label class="flex items-center space-x-2 text-sm">
+                                <input type="checkbox" id="useArxiv" checked class="rounded text-blue-600 focus:ring-blue-500">
+                                <span>arXiv</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Additional Options -->
+                    <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <label class="flex items-center space-x-2 text-sm">
+                            <input type="checkbox" id="includeDOI" checked class="rounded text-blue-600 focus:ring-blue-500">
+                            <span>Include DOI</span>
+                        </label>
+                        <label class="flex items-center space-x-2 text-sm">
+                            <input type="checkbox" id="includeAbstract" class="rounded text-blue-600 focus:ring-blue-500">
+                            <span>Show abstracts</span>
+                        </label>
+                        <label class="flex items-center space-x-2 text-sm">
+                            <input type="checkbox" id="sortByCitations" checked class="rounded text-blue-600 focus:ring-blue-500">
+                            <span>Sort by citations</span>
+                        </label>
+                        <label class="flex items-center space-x-2 text-sm">
+                            <input type="checkbox" id="requireDOI" checked class="rounded text-blue-600 focus:ring-blue-500">
+                            <span>Require DOI</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Action Button -->
+                <div class="flex items-center justify-center">
+                    <button 
+                        id="generateBtn"
+                        onclick="generateRealCitations()" 
+                        class="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition duration-200 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105">
+                        <i class="fas fa-search mr-2"></i>
+                        Find Real Citations from Academic APIs
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="hidden bg-white rounded-xl shadow-lg p-8 mb-8">
+            <div class="text-center mb-6">
+                <div class="inline-block">
+                    <div class="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+                    <p class="text-lg font-semibold text-gray-700">Searching Academic Databases...</p>
+                    <p class="text-sm text-gray-500 mt-2" id="searchStatus">Analyzing sentences...</p>
+                </div>
+            </div>
+            
+            <div class="max-w-2xl mx-auto">
+                <div class="search-progress">
+                    <div class="flex justify-between text-sm mb-2">
+                        <span class="font-medium text-gray-700">Progress</span>
+                        <span class="text-gray-600"><span id="currentSentence">0</span> / <span id="totalSentences">0</span> sentences</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                    </div>
+                </div>
+                
+                <div class="mt-4 space-y-2 text-sm">
+                    <div class="flex items-center space-x-2" id="semanticScholarStatus">
+                        <i class="fas fa-circle text-gray-400 text-xs"></i>
+                        <span class="text-gray-600">Semantic Scholar: Waiting...</span>
+                    </div>
+                    <div class="flex items-center space-x-2" id="crossrefStatus">
+                        <i class="fas fa-circle text-gray-400 text-xs"></i>
+                        <span class="text-gray-600">CrossRef: Waiting...</span>
+                    </div>
+                    <div class="flex items-center space-x-2" id="arxivStatus">
+                        <i class="fas fa-circle text-gray-400 text-xs"></i>
+                        <span class="text-gray-600">arXiv: Waiting...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Output Section -->
+        <div id="outputSection" class="hidden">
+            
+            <!-- Statistics -->
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-6 no-print">
+                <h3 class="text-lg font-semibold mb-4">
+                    <i class="fas fa-chart-bar mr-2 text-green-600"></i>
+                    Real Citation Statistics
+                </h3>
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    <div class="bg-blue-50 rounded-lg p-4 text-center">
+                        <div class="text-3xl font-bold text-blue-600" id="stat-citations">0</div>
+                        <div class="text-xs text-gray-600 mt-1">Total Citations</div>
+                    </div>
+                    <div class="bg-green-50 rounded-lg p-4 text-center">
+                        <div class="text-3xl font-bold text-green-600" id="stat-sentences">0</div>
+                        <div class="text-xs text-gray-600 mt-1">Cited Sentences</div>
+                    </div>
+                    <div class="bg-purple-50 rounded-lg p-4 text-center">
+                        <div class="text-3xl font-bold text-purple-600" id="stat-sources">0</div>
+                        <div class="text-xs text-gray-600 mt-1">Unique Papers</div>
+                    </div>
+                    <div class="bg-yellow-50 rounded-lg p-4 text-center">
+                        <div class="text-3xl font-bold text-yellow-600" id="stat-dois">0</div>
+                        <div class="text-xs text-gray-600 mt-1">Valid DOIs</div>
+                    </div>
+                    <div class="bg-indigo-50 rounded-lg p-4 text-center">
+                        <div class="text-3xl font-bold text-indigo-600" id="stat-coverage">0%</div>
+                        <div class="text-xs text-gray-600 mt-1">Coverage</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cited Text -->
+            <div class="bg-white rounded-xl shadow-lg p-8 mb-6">
+                <div class="flex items-center justify-between mb-6 no-print">
+                    <h3 class="text-xl font-bold text-gray-900">
+                        <i class="fas fa-file-alt mr-2 text-blue-600"></i>
+                        Your Text with Real Citations
+                    </h3>
+                    <div class="flex space-x-2">
+                        <button onclick="copyToClipboard()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm">
+                            <i class="fas fa-copy mr-2"></i>Copy
+                        </button>
+                        <button onclick="window.print()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition text-sm">
+                            <i class="fas fa-print mr-2"></i>Print
+                        </button>
+                        <button onclick="exportToWord()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm">
+                            <i class="fas fa-file-word mr-2"></i>Export
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="citedText" class="prose max-w-none" style="font-family: 'Times New Roman', serif; line-height: 2; font-size: 16px;">
+                    <!-- Cited text will appear here -->
+                </div>
+            </div>
+
+            <!-- References List -->
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <h3 class="text-xl font-bold text-gray-900 mb-6">
+                    <i class="fas fa-book mr-2 text-green-600"></i>
+                    References (Real Academic Papers)
+                    <span class="text-sm font-normal text-gray-500 ml-3" id="styleIndicator">APA 7th Edition</span>
+                </h3>
+                
+                <div id="referencesList" class="space-y-3">
+                    <!-- References will appear here -->
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t mt-16 py-6 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-gray-600">
+            <p><strong>Real Academic Citations</strong> powered by free APIs</p>
+            <p class="mt-2 text-xs text-gray-500">
+                <i class="fas fa-database mr-1"></i>
+                Semantic Scholar • CrossRef • arXiv - All citations are from real published papers with verified DOI links
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        // Global state
+        let citations = [];
+        let references = [];
+        let citedSentences = [];
+
+        // Character and sentence counter
+        document.getElementById('inputText').addEventListener('input', function(e) {
+            const text = e.target.value;
+            document.getElementById('charCount').textContent = text.length;
+            
+            const sentences = splitIntoSentences(text);
+            document.getElementById('sentenceCount').textContent = sentences.length;
+        });
+
+        // Toggle API config
+        function toggleAPIConfig() {
+            const config = document.getElementById('apiConfig');
+            config.classList.toggle('hidden');
+        }
+
+        // Clear input
+        function clearInput() {
+            document.getElementById('inputText').value = '';
+            document.getElementById('charCount').textContent = '0';
+            document.getElementById('sentenceCount').textContent = '0';
+        }
+
+        // Split text into sentences
+        function splitIntoSentences(text) {
+            const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
+            return sentences.map(s => s.trim()).filter(s => s.length > 10);
+        }
+
+        // Main function to generate REAL citations
+        async function generateRealCitations() {
+            const inputText = document.getElementById('inputText').value.trim();
+            
+            if (!inputText) {
+                alert('Please paste your text first');
+                return;
+            }
+
+            // Validate at least one API source is selected
+            const useSemanticScholar = document.getElementById('useSemanticScholar').checked;
+            const useCrossRef = document.getElementById('useCrossRef').checked;
+            const useArxiv = document.getElementById('useArxiv').checked;
+            
+            if (!useSemanticScholar && !useCrossRef && !useArxiv) {
+                alert('Please select at least one API source');
+                return;
+            }
+
+            // Show loading state
+            document.getElementById('loadingState').classList.remove('hidden');
+            document.getElementById('outputSection').classList.add('hidden');
+            document.getElementById('generateBtn').disabled = true;
+
+            try {
+                // Split text into sentences
+                const sentences = splitIntoSentences(inputText);
+                document.getElementById('totalSentences').textContent = sentences.length;
+                
+                // Initialize
+                citedSentences = [];
+                references = [];
+                citations = [];
+                
+                // Process each sentence
+                for (let i = 0; i < sentences.length; i++) {
+                    const sentence = sentences[i];
+                    
+                    // Update progress
+                    updateProgress(i + 1, sentences.length, `Processing sentence ${i + 1}...`);
+                    
+                    // Search for relevant papers
+                    const papers = await searchRealPapers(sentence);
+                    
+                    if (papers.length > 0) {
+                        const citationNumbers = [];
+                        const maxCitations = parseInt(document.getElementById('citationsPerSentence').value);
+                        
+                        for (let j = 0; j < Math.min(papers.length, maxCitations); j++) {
+                            const paper = papers[j];
+                            let refIndex = references.findIndex(r => r.doi === paper.doi || r.title === paper.title);
+                            
+                            if (refIndex === -1) {
+                                references.push(paper);
+                                refIndex = references.length - 1;
+                            }
+                            
+                            citationNumbers.push(refIndex + 1);
+                        }
+                        
+                        citedSentences.push({
+                            text: sentence,
+                            citations: citationNumbers
+                        });
+                    } else {
+                        citedSentences.push({
+                            text: sentence,
+                            citations: []
+                        });
+                    }
+                    
+                    // Small delay to avoid rate limiting
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+
+                // Display results
+                displayCitedText();
+                displayReferences();
+                updateStatistics();
+
+                // Show output section
+                document.getElementById('loadingState').classList.add('hidden');
+                document.getElementById('outputSection').classList.remove('hidden');
+                
+                // Scroll to results
+                document.getElementById('outputSection').scrollIntoView({ behavior: 'smooth' });
+
+            } catch (error) {
+                console.error('Error generating citations:', error);
+                alert('An error occurred while generating citations. Please try again.');
+            } finally {
+                document.getElementById('generateBtn').disabled = false;
+            }
+        }
+
+        // Update progress bar
+        function updateProgress(current, total, status) {
+            document.getElementById('currentSentence').textContent = current;
+            document.getElementById('searchStatus').textContent = status;
+            const percentage = (current / total) * 100;
+            document.getElementById('progressFill').style.width = percentage + '%';
+        }
+
+        // Update API status
+        function updateAPIStatus(api, status, message) {
+            const statusEl = document.getElementById(`${api}Status`);
+            const icon = statusEl.querySelector('i');
+            const text = statusEl.querySelector('span');
+            
+            if (status === 'searching') {
+                icon.className = 'fas fa-spinner fa-spin text-blue-500 text-xs';
+                text.textContent = `${api}: ${message}`;
+                text.className = 'text-blue-600 font-medium';
+            } else if (status === 'success') {
+                icon.className = 'fas fa-check-circle text-green-500 text-xs';
+                text.textContent = `${api}: ${message}`;
+                text.className = 'text-green-600';
+            } else if (status === 'error') {
+                icon.className = 'fas fa-exclamation-circle text-red-500 text-xs';
+                text.textContent = `${api}: ${message}`;
+                text.className = 'text-red-600';
+            }
+        }
+
+        // Search real academic papers from APIs
+        async function searchRealPapers(query) {
+            const papers = [];
+            const useSemanticScholar = document.getElementById('useSemanticScholar').checked;
+            const useCrossRef = document.getElementById('useCrossRef').checked;
+            const useArxiv = document.getElementById('useArxiv').checked;
+            const requireDOI = document.getElementById('requireDOI').checked;
+            const sortByCitations = document.getElementById('sortByCitations').checked;
+            const yearRange = document.getElementById('yearRange').value;
+            
+            // Calculate year filter
+            const currentYear = new Date().getFullYear();
+            const minYear = yearRange === 'all' ? 1900 : currentYear - parseInt(yearRange);
+            
+            // Extract keywords from sentence
+            const keywords = extractKeywords(query);
+            const searchQuery = keywords.join(' ');
+            
+            // Search Semantic Scholar
+            if (useSemanticScholar && searchQuery) {
+                updateAPIStatus('semanticScholar', 'searching', 'Searching...');
+                try {
+                    const semanticPapers = await searchSemanticScholar(searchQuery, minYear);
+                    papers.push(...semanticPapers);
+                    updateAPIStatus('semanticScholar', 'success', `Found ${semanticPapers.length} papers`);
+                } catch (error) {
+                    console.error('Semantic Scholar error:', error);
+                    updateAPIStatus('semanticScholar', 'error', 'Error occurred');
+                }
+            }
+            
+            // Search CrossRef
+            if (useCrossRef && searchQuery) {
+                updateAPIStatus('crossref', 'searching', 'Searching...');
+                try {
+                    const crossrefPapers = await searchCrossRef(searchQuery, minYear);
+                    papers.push(...crossrefPapers);
+                    updateAPIStatus('crossref', 'success', `Found ${crossrefPapers.length} papers`);
+                } catch (error) {
+                    console.error('CrossRef error:', error);
+                    updateAPIStatus('crossref', 'error', 'Error occurred');
+                }
+            }
+            
+            // Search arXiv
+            if (useArxiv && searchQuery) {
+                updateAPIStatus('arxiv', 'searching', 'Searching...');
+                try {
+                    const arxivPapers = await searchArxiv(searchQuery);
+                    papers.push(...arxivPapers);
+                    updateAPIStatus('arxiv', 'success', `Found ${arxivPapers.length} papers`);
+                } catch (error) {
+                    console.error('arXiv error:', error);
+                    updateAPIStatus('arxiv', 'error', 'Error occurred');
+                }
+            }
+            
+            // Filter papers
+            let filteredPapers = papers;
+            
+            // Remove duplicates by DOI or title
+            filteredPapers = filteredPapers.filter((paper, index, self) => 
+                index === self.findIndex(p => 
+                    (p.doi && paper.doi && p.doi === paper.doi) ||
+                    (!p.doi && !paper.doi && p.title === paper.title)
+                )
+            );
+            
+            // Require DOI if selected
+            if (requireDOI) {
+                filteredPapers = filteredPapers.filter(p => p.doi);
+            }
+            
+            // Sort by citation count if selected
+            if (sortByCitations) {
+                filteredPapers.sort((a, b) => (b.citationCount || 0) - (a.citationCount || 0));
+            }
+            
+            return filteredPapers;
+        }
+
+        // Extract keywords from sentence
+        function extractKeywords(sentence) {
+            // Remove common words and extract meaningful terms
+            const commonWords = ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'from', 'has', 'have', 'had', 'is', 'are', 'was', 'were', 'been', 'be', 'being', 'can', 'could', 'may', 'might', 'will', 'would', 'should', 'this', 'that', 'these', 'those'];
+            const words = sentence.toLowerCase()
+                .replace(/[^\w\s]/g, '')
+                .split(/\s+/)
+                .filter(word => word.length > 3 && !commonWords.includes(word));
+            
+            // Take top 5 most relevant words
+            return words.slice(0, 5);
+        }
+
+        // Search Semantic Scholar API
+        async function searchSemanticScholar(query, minYear) {
+            try {
+                const apiKey = document.getElementById('semanticScholarKey').value;
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                if (apiKey) {
+                    headers['x-api-key'] = apiKey;
+                }
+                
+                const url = `https://api.semanticscholar.org/graph/v1/paper/search?query=${encodeURIComponent(query)}&limit=5&fields=title,authors,year,venue,citationCount,externalIds,abstract,publicationDate`;
+                
+                const response = await fetch(url, { headers });
+                
+                if (!response.ok) {
+                    throw new Error(`Semantic Scholar API error: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                return (data.data || [])
+                    .filter(paper => paper.year >= minYear)
+                    .map(paper => ({
+                        title: paper.title,
+                        authors: (paper.authors || []).map(a => [a.name.split(' ').pop(), a.name.split(' ')[0]]),
+                        year: paper.year,
+                        journal: paper.venue || 'Conference Paper',
+                        doi: paper.externalIds?.DOI,
+                        url: paper.externalIds?.DOI ? `https://doi.org/${paper.externalIds.DOI}` : null,
+                        citationCount: paper.citationCount || 0,
+                        abstract: paper.abstract,
+                        source: 'Semantic Scholar'
+                    }))
+                    .filter(paper => paper.title && paper.authors.length > 0);
+            } catch (error) {
+                console.error('Semantic Scholar search error:', error);
+                return [];
+            }
+        }
+
+        // Search CrossRef API
+        async function searchCrossRef(query, minYear) {
+            try {
+                const email = document.getElementById('crossrefEmail').value;
+                const mailto = email ? `&mailto=${encodeURIComponent(email)}` : '';
+                
+                const url = `https://api.crossref.org/works?query=${encodeURIComponent(query)}&rows=5&filter=from-pub-date:${minYear}${mailto}`;
+                
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`CrossRef API error: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                return (data.message.items || [])
+                    .map(paper => {
+                        const pubDate = paper.published?.['date-parts']?.[0];
+                        const year = pubDate ? pubDate[0] : null;
+                        
+                        return {
+                            title: paper.title?.[0],
+                            authors: (paper.author || []).map(a => [a.family || '', a.given || '']),
+                            year: year,
+                            journal: paper['container-title']?.[0] || 'Journal',
+                            volume: paper.volume,
+                            issue: paper.issue,
+                            pages: paper.page,
+                            doi: paper.DOI,
+                            url: paper.DOI ? `https://doi.org/${paper.DOI}` : null,
+                            citationCount: paper['is-referenced-by-count'] || 0,
+                            abstract: paper.abstract,
+                            source: 'CrossRef'
+                        };
+                    })
+                    .filter(paper => paper.title && paper.year && paper.authors.length > 0);
+            } catch (error) {
+                console.error('CrossRef search error:', error);
+                return [];
+            }
+        }
+
+        // Search arXiv API
+        async function searchArxiv(query) {
+            try {
+                const url = `https://export.arxiv.org/api/query?search_query=all:${encodeURIComponent(query)}&start=0&max_results=5`;
+                
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`arXiv API error: ${response.status}`);
+                }
+                
+                const text = await response.text();
+                const parser = new DOMParser();
+                const xml = parser.parseFromString(text, 'text/xml');
+                
+                const entries = xml.querySelectorAll('entry');
+                const papers = [];
+                
+                entries.forEach(entry => {
+                    const title = entry.querySelector('title')?.textContent.trim();
+                    const authors = Array.from(entry.querySelectorAll('author name')).map(a => {
+                        const name = a.textContent.trim();
+                        const parts = name.split(' ');
+                        return [parts[parts.length - 1], parts[0]];
+                    });
+                    const published = entry.querySelector('published')?.textContent;
+                    const year = published ? new Date(published).getFullYear() : null;
+                    const summary = entry.querySelector('summary')?.textContent.trim();
+                    const id = entry.querySelector('id')?.textContent;
+                    const arxivId = id ? id.split('/').pop() : null;
+                    
+                    if (title && authors.length > 0 && year) {
+                        papers.push({
+                            title: title,
+                            authors: authors,
+                            year: year,
+                            journal: 'arXiv preprint',
+                            doi: null,
+                            url: id,
+                            arxivId: arxivId,
+                            citationCount: 0,
+                            abstract: summary,
+                            source: 'arXiv'
+                        });
+                    }
+                });
+                
+                return papers;
+            } catch (error) {
+                console.error('arXiv search error:', error);
+                return [];
+            }
+        }
+
+        // Display cited text
+        function displayCitedText() {
+            const container = document.getElementById('citedText');
+            let html = '';
+            
+            citedSentences.forEach((item, index) => {
+                const hasCitation = item.citations.length > 0;
+                const citationHtml = hasCitation ? 
+                    ' ' + item.citations.map(num => 
+                        `<sup class="citation-number" onclick="scrollToReference(${num})" title="Click to see reference">[${num}]</sup>`
+                    ).join('') : '';
+                
+                if (hasCitation) {
+                    html += `<div class="cited-sentence">
+                        <span class="sentence-number">${index + 1}.</span>
+                        ${item.text}${citationHtml}
+                    </div>`;
+                } else {
+                    html += `<div style="margin: 8px 0; padding-left: 8px;">
+                        <span class="sentence-number">${index + 1}.</span>
+                        ${item.text}
+                    </div>`;
+                }
+            });
+            
+            container.innerHTML = html;
+        }
+
+        // Display references
+        function displayReferences() {
+            const container = document.getElementById('referencesList');
+            const style = document.getElementById('citationStyle').value;
+            const includeDOI = document.getElementById('includeDOI').checked;
+            const includeAbstract = document.getElementById('includeAbstract').checked;
+            
+            let html = '';
+            references.forEach((paper, index) => {
+                const formattedRef = formatReference(paper, style);
+                
+                const doiHtml = includeDOI && paper.doi ? 
+                    `<div class="mt-2">
+                        <i class="fas fa-link text-green-600 mr-2"></i>
+                        <a href="${paper.url}" target="_blank" class="doi-link">
+                            https://doi.org/${paper.doi}
+                            <i class="fas fa-external-link-alt text-xs"></i>
+                        </a>
+                    </div>` : '';
+                
+                const arxivHtml = paper.arxivId && !paper.doi ?
+                    `<div class="mt-2">
+                        <i class="fas fa-file-alt text-blue-600 mr-2"></i>
+                        <a href="${paper.url}" target="_blank" class="doi-link">
+                            arXiv:${paper.arxivId}
+                            <i class="fas fa-external-link-alt text-xs"></i>
+                        </a>
+                    </div>` : '';
+                
+                const abstractHtml = includeAbstract && paper.abstract ?
+                    `<div class="mt-2 text-sm text-gray-600 italic bg-gray-50 p-3 rounded">
+                        ${paper.abstract.substring(0, 200)}${paper.abstract.length > 200 ? '...' : ''}
+                    </div>` : '';
+                
+                const sourceHtml = `<span class="text-xs text-gray-500 ml-2">(Source: ${paper.source})</span>`;
+                
+                html += `
+                    <div class="reference-card" id="ref-${index + 1}">
+                        <div class="flex items-start">
+                            <div class="bg-blue-100 text-blue-700 font-bold rounded-full w-8 h-8 flex items-center justify-center mr-4 flex-shrink-0">
+                                ${index + 1}
+                            </div>
+                            <div class="flex-1">
+                                <div class="text-gray-800" style="line-height: 1.6;">
+                                    ${formattedRef}
+                                    ${sourceHtml}
+                                </div>
+                                ${doiHtml}
+                                ${arxivHtml}
+                                ${abstractHtml}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html || '<p class="text-gray-500">No references found.</p>';
+        }
+
+        // Format reference based on citation style
+        function formatReference(paper, style) {
+            const authorsText = formatAuthors(paper.authors, style);
+            const volumeInfo = paper.volume ? `, <em>${paper.volume}</em>` : '';
+            const issueInfo = paper.issue ? `(${paper.issue})` : '';
+            const pagesInfo = paper.pages ? `, ${paper.pages}` : '';
+            
+            switch(style) {
+                case 'apa':
+                    return `${authorsText} (${paper.year}). ${paper.title}. <em>${paper.journal}</em>${volumeInfo}${issueInfo}${pagesInfo}.`;
+                
+                case 'mla':
+                    return `${authorsText}. "${paper.title}." <em>${paper.journal}</em>${volumeInfo ? ', vol. ' + paper.volume : ''}${issueInfo ? ', no. ' + paper.issue : ''}, ${paper.year}${pagesInfo ? ', pp. ' + paper.pages : ''}.`;
+                
+                case 'chicago':
+                    return `${authorsText}. "${paper.title}." <em>${paper.journal}</em> ${paper.volume}${issueInfo ? ', no. ' + paper.issue : ''} (${paper.year})${pagesInfo ? ': ' + paper.pages : ''}.`;
+                
+                case 'harvard':
+                    return `${authorsText}, ${paper.year}. ${paper.title}. <em>${paper.journal}</em>${volumeInfo}${issueInfo}${pagesInfo}.`;
+                
+                case 'ieee':
+                    return `${authorsText}, "${paper.title}," <em>${paper.journal}</em>${volumeInfo ? ', vol. ' + paper.volume : ''}${issueInfo ? ', no. ' + paper.issue : ''}${pagesInfo ? ', pp. ' + paper.pages : ''}, ${paper.year}.`;
+                
+                case 'vancouver':
+                    return `${authorsText}. ${paper.title}. ${paper.journal}. ${paper.year}${volumeInfo ? ';' + paper.volume : ''}${issueInfo}${pagesInfo ? ':' + paper.pages : ''}.`;
+                
+                default:
+                    return `${authorsText} (${paper.year}). ${paper.title}. ${paper.journal}.`;
+            }
+        }
+
+        // Format authors based on style
+        function formatAuthors(authors, style) {
+            if (!authors || authors.length === 0) return 'Unknown';
+            
+            const formatAuthor = (author, isFirst = false) => {
+                const [lastName, firstName] = author;
+                const initial = firstName ? firstName.charAt(0) + '.' : '';
+                
+                switch(style) {
+                    case 'apa':
+                    case 'chicago':
+                    case 'harvard':
+                        return `${lastName}, ${initial}`;
+                    case 'mla':
+                        return isFirst ? `${lastName}, ${firstName}` : `${firstName} ${lastName}`;
+                    case 'ieee':
+                    case 'vancouver':
+                        return `${initial} ${lastName}`;
+                    default:
+                        return `${lastName}, ${initial}`;
+                }
+            };
+            
+            if (authors.length === 1) {
+                return formatAuthor(authors[0], true);
+            } else if (authors.length === 2) {
+                if (style === 'apa') {
+                    return `${formatAuthor(authors[0], true)}, & ${formatAuthor(authors[1])}`;
+                } else {
+                    return `${formatAuthor(authors[0], true)}, ${formatAuthor(authors[1])}`;
+                }
+            } else if (authors.length <= 7) {
+                const formattedAuthors = authors.map((a, i) => formatAuthor(a, i === 0));
+                if (style === 'apa') {
+                    return formattedAuthors.slice(0, -1).join(', ') + ', & ' + formattedAuthors[formattedAuthors.length - 1];
+                } else {
+                    return formattedAuthors.join(', ');
+                }
+            } else {
+                return `${formatAuthor(authors[0], true)} et al.`;
+            }
+        }
+
+        // Update statistics
+        function updateStatistics() {
+            const totalCitations = citedSentences.reduce((sum, s) => sum + s.citations.length, 0);
+            const citedSentenceCount = citedSentences.filter(s => s.citations.length > 0).length;
+            const uniqueSources = references.length;
+            const validDOIs = references.filter(r => r.doi).length;
+            const coverage = citedSentences.length > 0 ? 
+                Math.round((citedSentenceCount / citedSentences.length) * 100) : 0;
+            
+            document.getElementById('stat-citations').textContent = totalCitations;
+            document.getElementById('stat-sentences').textContent = citedSentenceCount;
+            document.getElementById('stat-sources').textContent = uniqueSources;
+            document.getElementById('stat-dois').textContent = validDOIs;
+            document.getElementById('stat-coverage').textContent = coverage + '%';
+        }
+
+        // Scroll to reference
+        function scrollToReference(refNumber) {
+            const refElement = document.getElementById(`ref-${refNumber}`);
+            if (refElement) {
+                refElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                refElement.style.background = '#fef3c7';
+                setTimeout(() => {
+                    refElement.style.background = 'white';
+                }, 2000);
+            }
+        }
+
+        // Copy to clipboard
+        function copyToClipboard() {
+            const citedText = document.getElementById('citedText').innerText;
+            const referencesText = document.getElementById('referencesList').innerText;
+            const fullText = citedText + '\n\nReferences\n' + referencesText;
+            
+            navigator.clipboard.writeText(fullText).then(() => {
+                alert('Copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+            });
+        }
+
+        // Export to Word format
+        function exportToWord() {
+            const citedHTML = document.getElementById('citedText').innerHTML;
+            const referencesHTML = document.getElementById('referencesList').innerHTML;
+            
+            const fullHTML = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="utf-8">
+                    <title>Cited Text with Real References</title>
+                    <style>
+                        body { font-family: 'Times New Roman', serif; line-height: 2; margin: 1in; }
+                        .cited-sentence { margin: 8px 0; }
+                        .citation-number { color: blue; }
+                        .reference-card { margin-bottom: 12px; }
+                        h2 { font-weight: bold; margin-top: 24px; }
+                    </style>
+                </head>
+                <body>
+                    <h1>Text with Real Academic Citations</h1>
+                    ${citedHTML}
+                    <h2>References</h2>
+                    ${referencesHTML}
+                </body>
+                </html>
+            `;
+            
+            const blob = new Blob([fullHTML], { type: 'application/msword' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `cited-text-real-${Date.now()}.doc`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Update citation style dynamically
+        document.getElementById('citationStyle').addEventListener('change', function() {
+            if (references.length > 0) {
+                displayReferences();
+            }
+        });
+
+        // Update DOI display dynamically
+        document.getElementById('includeDOI').addEventListener('change', function() {
+            if (references.length > 0) {
+                displayReferences();
+            }
+        });
+
+        // Update abstract display dynamically
+        document.getElementById('includeAbstract').addEventListener('change', function() {
+            if (references.length > 0) {
+                displayReferences();
+            }
+        });
+    </script>
+</body>
+</html>
