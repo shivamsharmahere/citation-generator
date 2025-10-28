@@ -230,7 +230,7 @@
                 <!-- Text Input -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Your Text (Each sentence will get real academic citations)
+                        Your Text (Semantic chunks will be analyzed for citations)
                     </label>
                     <textarea 
                         id="inputText" 
@@ -284,7 +284,7 @@
 
                         <!-- Results per sentence -->
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Citations per Sentence</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Citations per Chunk</label>
                             <select id="citationsPerSentence" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500">
                                 <option value="1">1 citation</option>
                                 <option value="2">2 citations</option>
@@ -563,6 +563,55 @@
                 });
         }
 
+        // Group sentences into semantic chunks for better citation handling
+        function groupIntoSemanticChunks(sentences) {
+            // This function groups related sentences together based on:
+            // 1. Length (min ~60 words per chunk for meaningful context)
+            // 2. Coherence (same topic/subject)
+            // 3. Natural paragraph breaks
+            
+            const chunks = [];
+            let currentChunk = [];
+            let wordCount = 0;
+            const wordsPerChunk = 60; // Minimum words per semantic chunk
+            
+            sentences.forEach((sentence, index) => {
+                const sentenceWords = sentence.text.split(/\s+/).length;
+                
+                currentChunk.push(sentence);
+                wordCount += sentenceWords;
+                
+                // Create chunk if:
+                // 1. Word count exceeds threshold AND (next is last sentence OR has period)
+                // 2. This is the last sentence
+                // 3. Paragraph break detected (sentences usually break with numbers/headings)
+                const isLastSentence = index === sentences.length - 1;
+                const hasHeadingNumber = /^\d+\.\d+/.test(sentences[index + 1]?.text || '');
+                const shouldBreak = wordCount >= wordsPerChunk || isLastSentence || hasHeadingNumber;
+                
+                if (shouldBreak && currentChunk.length > 0) {
+                    chunks.push({
+                        sentences: currentChunk,
+                        text: currentChunk.map(s => s.text + s.punctuation).join(' '),
+                        wordCount: wordCount
+                    });
+                    currentChunk = [];
+                    wordCount = 0;
+                }
+            });
+            
+            // Handle any remaining sentences
+            if (currentChunk.length > 0) {
+                chunks.push({
+                    sentences: currentChunk,
+                    text: currentChunk.map(s => s.text + s.punctuation).join(' '),
+                    wordCount: wordCount
+                });
+            }
+            
+            return chunks;
+        }
+
         // Main function to generate REAL citations
         async function generateRealCitations() {
             const inputText = document.getElementById('inputText').value.trim();
@@ -590,22 +639,25 @@
             try {
                 // Split text into sentences
                 const sentences = splitIntoSentences(inputText);
-                document.getElementById('totalSentences').textContent = sentences.length;
+                
+                // Group sentences into semantic chunks
+                const semanticChunks = groupIntoSemanticChunks(sentences);
+                document.getElementById('totalSentences').textContent = semanticChunks.length;
                 
                 // Initialize
                 citedSentences = [];
                 references = [];
                 citations = [];
                 
-                // Process each sentence
-                for (let i = 0; i < sentences.length; i++) {
-                    const sentence = sentences[i];
+                // Process each semantic chunk
+                for (let i = 0; i < semanticChunks.length; i++) {
+                    const chunk = semanticChunks[i];
                     
                     // Update progress
-                    updateProgress(i + 1, sentences.length, `Processing sentence ${i + 1}...`);
+                    updateProgress(i + 1, semanticChunks.length, `Processing semantic chunk ${i + 1}...`);
                     
-                    // Search for relevant papers
-                    const papers = await searchRealPapers(sentence);
+                    // Search for relevant papers using the entire chunk as query
+                    const papers = await searchRealPapers(chunk);
                     
                     if (papers.length > 0) {
                         const citationNumbers = [];
@@ -613,7 +665,10 @@
                         
                         for (let j = 0; j < Math.min(papers.length, maxCitations); j++) {
                             const paper = papers[j];
-                            let refIndex = references.findIndex(r => r.doi === paper.doi || r.title === paper.title);
+                            let refIndex = references.findIndex(r => 
+                                (r.doi && paper.doi && r.doi === paper.doi) || 
+                                (r.title === paper.title)
+                            );
                             
                             if (refIndex === -1) {
                                 references.push(paper);
@@ -624,18 +679,22 @@
                         }
                         
                         citedSentences.push({
-                            text: sentence,
-                            citations: citationNumbers
+                            text: chunk.text,
+                            citations: citationNumbers,
+                            isChunk: true,
+                            sentenceCount: chunk.sentences.length
                         });
                     } else {
                         citedSentences.push({
-                            text: sentence,
-                            citations: []
+                            text: chunk.text,
+                            citations: [],
+                            isChunk: true,
+                            sentenceCount: chunk.sentences.length
                         });
                     }
                     
                     // Small delay to avoid rate limiting
-                    await new Promise(resolve => setTimeout(resolve, 500));
+                    await new Promise(resolve => setTimeout(resolve, 300));
                 }
 
                 // Display results
@@ -688,8 +747,19 @@
         }
 
         // Search real academic papers from APIs
-        async function searchRealPapers(query) {
+        async function searchRealPapers(queryInput) {
             const papers = [];
+            
+            // Handle both sentence objects and chunk objects
+            let queryText = '';
+            if (typeof queryInput === 'string') {
+                queryText = queryInput;
+            } else if (queryInput.text) {
+                queryText = queryInput.text;
+            } else {
+                queryText = '';
+            }
+            
             const useSemanticScholar = document.getElementById('useSemanticScholar').checked;
             const useCrossRef = document.getElementById('useCrossRef').checked;
             const useArxiv = document.getElementById('useArxiv').checked;
@@ -710,9 +780,13 @@
             const currentYear = new Date().getFullYear();
             const minYear = yearRange === 'all' ? 1900 : currentYear - parseInt(yearRange);
             
-            // Extract keywords from sentence
-            const keywords = extractKeywords(query);
+            // Extract keywords from text
+            const keywords = extractKeywords(queryText);
             const searchQuery = keywords.join(' ');
+            
+            if (!searchQuery) {
+                return [];
+            }
             
             // Search Semantic Scholar
             if (useSemanticScholar && searchQuery) {
@@ -847,7 +921,7 @@
             // Calculate relevance scores if semantic matching is enabled
             if (useSemanticMatching) {
                 filteredPapers = filteredPapers.map(paper => {
-                    const relevanceScore = calculateRelevanceScore(query, paper);
+                    const relevanceScore = calculateRelevanceScore(queryText, paper);
                     const credibilityScore = calculateCredibilityScore(paper);
                     const freshnessScore = calculateFreshnessScore(paper.year);
                     
@@ -1361,25 +1435,29 @@
             const citedTextDiv = document.getElementById('citedText');
             citedTextDiv.innerHTML = '';
             
-            citedSentences.forEach((citedSentence, index) => {
-                const sentenceEl = document.createElement('span');
-                sentenceEl.className = 'cited-sentence';
+            citedSentences.forEach((citedItem, index) => {
+                const itemEl = document.createElement('div');
+                itemEl.className = 'cited-sentence';
                 
-                let sentenceHTML = citedSentence.text;
+                let itemHTML = citedItem.text;
                 
-                // Add citation numbers after the sentence text
-                if (citedSentence.citations.length > 0) {
-                    citedSentence.citations.forEach(citationNum => {
-                        sentenceHTML += `<sup class="citation-number">[${citationNum}]</sup>`;
+                // Add citation numbers after the text
+                if (citedItem.citations && citedItem.citations.length > 0) {
+                    citedItem.citations.forEach(citationNum => {
+                        itemHTML += `<sup class="citation-number" onclick="scrollToReference(${citationNum})" style="cursor: pointer;">[${citationNum}]</sup>`;
                     });
+                } else if (citedItem.isChunk) {
+                    // Show indicator that no citations found
+                    itemHTML += ` <span class="text-sm text-gray-400" title="No citations found for this section">[no citations]</span>`;
                 }
                 
-                // Add the punctuation at the end
-                sentenceHTML += citedSentence.punctuation;
+                itemEl.innerHTML = itemHTML;
+                citedTextDiv.appendChild(itemEl);
                 
-                sentenceEl.innerHTML = sentenceHTML;
-                citedTextDiv.appendChild(sentenceEl);
-                citedTextDiv.appendChild(document.createElement('br'));
+                // Add paragraph break after chunk
+                const spacer = document.createElement('div');
+                spacer.style.height = '12px';
+                citedTextDiv.appendChild(spacer);
             });
         }
 
