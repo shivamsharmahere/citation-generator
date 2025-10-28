@@ -547,8 +547,20 @@
 
         // Split text into sentences
         function splitIntoSentences(text) {
-            const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
-            return sentences.map(s => s.trim()).filter(s => s.length > 10);
+            // Split on sentence-ending punctuation (., !, ?)
+            // This regex captures sentences while preserving the punctuation separately
+            const sentencePattern = /([^.!?]*[.!?])/g;
+            const matches = text.match(sentencePattern) || [];
+            
+            return matches
+                .map(s => s.trim())
+                .filter(s => s.length > 10)  // Only keep sentences longer than 10 characters
+                .map(s => {
+                    // Remove trailing punctuation for processing, but keep track of it
+                    const punctuation = s.match(/[.!?]$/)?.[0] || '.';
+                    const sentenceText = s.replace(/[.!?]$/, '').trim();
+                    return { text: sentenceText, punctuation: punctuation };
+                });
         }
 
         // Main function to generate REAL citations
@@ -1346,30 +1358,29 @@
 
         // Display cited text
         function displayCitedText() {
-            const container = document.getElementById('citedText');
-            let html = '';
+            const citedTextDiv = document.getElementById('citedText');
+            citedTextDiv.innerHTML = '';
             
-            citedSentences.forEach((item, index) => {
-                const hasCitation = item.citations.length > 0;
-                const citationHtml = hasCitation ? 
-                    ' ' + item.citations.map(num => 
-                        `<sup class="citation-number" onclick="scrollToReference(${num})" title="Click to see reference">[${num}]</sup>`
-                    ).join('') : '';
+            citedSentences.forEach((citedSentence, index) => {
+                const sentenceEl = document.createElement('span');
+                sentenceEl.className = 'cited-sentence';
                 
-                if (hasCitation) {
-                    html += `<div class="cited-sentence">
-                        <span class="sentence-number">${index + 1}.</span>
-                        ${item.text}${citationHtml}
-                    </div>`;
-                } else {
-                    html += `<div style="margin: 8px 0; padding-left: 8px;">
-                        <span class="sentence-number">${index + 1}.</span>
-                        ${item.text}
-                    </div>`;
+                let sentenceHTML = citedSentence.text;
+                
+                // Add citation numbers after the sentence text
+                if (citedSentence.citations.length > 0) {
+                    citedSentence.citations.forEach(citationNum => {
+                        sentenceHTML += `<sup class="citation-number">[${citationNum}]</sup>`;
+                    });
                 }
+                
+                // Add the punctuation at the end
+                sentenceHTML += citedSentence.punctuation;
+                
+                sentenceEl.innerHTML = sentenceHTML;
+                citedTextDiv.appendChild(sentenceEl);
+                citedTextDiv.appendChild(document.createElement('br'));
             });
-            
-            container.innerHTML = html;
         }
 
         // Display references
