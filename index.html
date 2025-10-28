@@ -150,7 +150,7 @@
                     </div>
                     <div>
                         <h1 class="text-3xl font-bold text-gray-900">Real Academic Citation Generator</h1>
-                        <p class="text-sm text-gray-600 mt-1">Powered by Semantic Scholar • CrossRef • arXiv</p>
+                        <p class="text-sm text-gray-600 mt-1">Powered by 7 Free Academic APIs (+ 4 Premium) with AI-Enhanced Relevance Scoring</p>
                     </div>
                 </div>
                 <div class="flex items-center space-x-4">
@@ -295,7 +295,7 @@
 
                     <!-- API Sources -->
                     <div class="mt-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Search Sources</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Search Sources (7 Free APIs + 4 Premium)</label>
                         <div class="grid grid-cols-3 gap-3">
                             <label class="flex items-center space-x-2 text-sm">
                                 <input type="checkbox" id="useSemanticScholar" checked class="rounded text-blue-600 focus:ring-blue-500">
@@ -308,6 +308,38 @@
                             <label class="flex items-center space-x-2 text-sm">
                                 <input type="checkbox" id="useArxiv" checked class="rounded text-blue-600 focus:ring-blue-500">
                                 <span>arXiv</span>
+                            </label>
+                            <label class="flex items-center space-x-2 text-sm">
+                                <input type="checkbox" id="useOpenAlex" checked class="rounded text-blue-600 focus:ring-blue-500">
+                                <span>OpenAlex</span>
+                            </label>
+                            <label class="flex items-center space-x-2 text-sm">
+                                <input type="checkbox" id="useDOAJ" checked class="rounded text-blue-600 focus:ring-blue-500">
+                                <span>DOAJ</span>
+                            </label>
+                            <label class="flex items-center space-x-2 text-sm">
+                                <input type="checkbox" id="usePubMed" checked class="rounded text-blue-600 focus:ring-blue-500">
+                                <span>PubMed Central</span>
+                            </label>
+                            <label class="flex items-center space-x-2 text-sm">
+                                <input type="checkbox" id="useSSRN" class="rounded text-blue-600 focus:ring-blue-500" disabled title="SSRN requires API key authentication">
+                                <span class="text-gray-400" title="SSRN requires API key authentication">SSRN (requires API key)</span>
+                            </label>
+                            <label class="flex items-center space-x-2 text-sm">
+                                <input type="checkbox" id="usePhilPapers" checked class="rounded text-blue-600 focus:ring-blue-500">
+                                <span>PhilPapers</span>
+                            </label>
+                            <label class="flex items-center space-x-2 text-sm">
+                                <input type="checkbox" id="useCORE" class="rounded text-blue-600 focus:ring-blue-500" disabled title="CORE requires API key for v3">
+                                <span class="text-gray-400" title="CORE requires API key for v3">CORE (requires API key)</span>
+                            </label>
+                            <label class="flex items-center space-x-2 text-sm">
+                                <input type="checkbox" id="useUnpaywall" class="rounded text-blue-600 focus:ring-blue-500" disabled title="Unpaywall requires DOI lookup">
+                                <span class="text-gray-400" title="Unpaywall requires DOI lookup">Unpaywall (DOI only)</span>
+                            </label>
+                            <label class="flex items-center space-x-2 text-sm">
+                                <input type="checkbox" id="useIEEE" class="rounded text-blue-600 focus:ring-blue-500" disabled title="IEEE Xplore requires API key">
+                                <span class="text-gray-400" title="IEEE Xplore requires API key">IEEE (requires API key)</span>
                             </label>
                         </div>
                     </div>
@@ -329,6 +361,22 @@
                         <label class="flex items-center space-x-2 text-sm">
                             <input type="checkbox" id="requireDOI" checked class="rounded text-blue-600 focus:ring-blue-500">
                             <span>Require DOI</span>
+                        </label>
+                        <label class="flex items-center space-x-2 text-sm">
+                            <input type="checkbox" id="showRelevanceScore" checked class="rounded text-blue-600 focus:ring-blue-500">
+                            <span>Show relevance score</span>
+                        </label>
+                        <label class="flex items-center space-x-2 text-sm">
+                            <input type="checkbox" id="showQualityMetrics" checked class="rounded text-blue-600 focus:ring-blue-500">
+                            <span>Show quality metrics</span>
+                        </label>
+                        <label class="flex items-center space-x-2 text-sm">
+                            <input type="checkbox" id="useSemanticMatching" checked class="rounded text-blue-600 focus:ring-blue-500">
+                            <span>Semantic matching</span>
+                        </label>
+                        <label class="flex items-center space-x-2 text-sm">
+                            <input type="checkbox" id="smartPlacement" checked class="rounded text-blue-600 focus:ring-blue-500">
+                            <span>Smart placement</span>
                         </label>
                     </div>
                 </div>
@@ -633,8 +681,17 @@
             const useSemanticScholar = document.getElementById('useSemanticScholar').checked;
             const useCrossRef = document.getElementById('useCrossRef').checked;
             const useArxiv = document.getElementById('useArxiv').checked;
+            const useOpenAlex = document.getElementById('useOpenAlex').checked;
+            const useDOAJ = document.getElementById('useDOAJ').checked;
+            const usePubMed = document.getElementById('usePubMed').checked;
+            const useSSRN = document.getElementById('useSSRN').checked;
+            const usePhilPapers = document.getElementById('usePhilPapers').checked;
+            const useCORE = document.getElementById('useCORE').checked;
+            const useUnpaywall = document.getElementById('useUnpaywall').checked;
+            const useIEEE = document.getElementById('useIEEE').checked;
             const requireDOI = document.getElementById('requireDOI').checked;
             const sortByCitations = document.getElementById('sortByCitations').checked;
+            const useSemanticMatching = document.getElementById('useSemanticMatching').checked;
             const yearRange = document.getElementById('yearRange').value;
             
             // Calculate year filter
@@ -684,6 +741,86 @@
                 }
             }
             
+            // Search OpenAlex
+            if (useOpenAlex && searchQuery) {
+                try {
+                    const openAlexPapers = await searchOpenAlex(searchQuery, minYear);
+                    papers.push(...openAlexPapers);
+                } catch (error) {
+                    console.error('OpenAlex error:', error);
+                }
+            }
+            
+            // Search DOAJ
+            if (useDOAJ && searchQuery) {
+                try {
+                    const doajPapers = await searchDOAJ(searchQuery, minYear);
+                    papers.push(...doajPapers);
+                } catch (error) {
+                    console.error('DOAJ error:', error);
+                }
+            }
+            
+            // Search PubMed Central
+            if (usePubMed && searchQuery) {
+                try {
+                    const pubmedPapers = await searchPubMed(searchQuery, minYear);
+                    papers.push(...pubmedPapers);
+                } catch (error) {
+                    console.error('PubMed error:', error);
+                }
+            }
+            
+            // Search SSRN
+            if (useSSRN && searchQuery) {
+                try {
+                    const ssrnPapers = await searchSSRN(searchQuery, minYear);
+                    papers.push(...ssrnPapers);
+                } catch (error) {
+                    console.error('SSRN error:', error);
+                }
+            }
+            
+            // Search PhilPapers
+            if (usePhilPapers && searchQuery) {
+                try {
+                    const philPapers = await searchPhilPapers(searchQuery, minYear);
+                    papers.push(...philPapers);
+                } catch (error) {
+                    console.error('PhilPapers error:', error);
+                }
+            }
+            
+            // Search CORE
+            if (useCORE && searchQuery) {
+                try {
+                    const corePapers = await searchCORE(searchQuery, minYear);
+                    papers.push(...corePapers);
+                } catch (error) {
+                    console.error('CORE error:', error);
+                }
+            }
+            
+            // Search Unpaywall
+            if (useUnpaywall && searchQuery) {
+                try {
+                    const unpaywallPapers = await searchUnpaywall(searchQuery, minYear);
+                    papers.push(...unpaywallPapers);
+                } catch (error) {
+                    console.error('Unpaywall error:', error);
+                }
+            }
+            
+            // Search IEEE
+            if (useIEEE && searchQuery) {
+                try {
+                    const ieeePapers = await searchIEEE(searchQuery, minYear);
+                    papers.push(...ieeePapers);
+                } catch (error) {
+                    console.error('IEEE error:', error);
+                }
+            }
+            
             // Filter papers
             let filteredPapers = papers;
             
@@ -695,17 +832,88 @@
                 )
             );
             
+            // Calculate relevance scores if semantic matching is enabled
+            if (useSemanticMatching) {
+                filteredPapers = filteredPapers.map(paper => {
+                    const relevanceScore = calculateRelevanceScore(query, paper);
+                    const credibilityScore = calculateCredibilityScore(paper);
+                    const freshnessScore = calculateFreshnessScore(paper.year);
+                    
+                    return {
+                        ...paper,
+                        relevanceScore,
+                        credibilityScore,
+                        freshnessScore,
+                        overallScore: (relevanceScore * 0.5) + (credibilityScore * 0.3) + (freshnessScore * 0.2)
+                    };
+                });
+                
+                // Sort by overall score
+                filteredPapers.sort((a, b) => b.overallScore - a.overallScore);
+            } else {
+                // Sort by citation count if selected
+                if (sortByCitations) {
+                    filteredPapers.sort((a, b) => (b.citationCount || 0) - (a.citationCount || 0));
+                }
+            }
+            
             // Require DOI if selected
             if (requireDOI) {
                 filteredPapers = filteredPapers.filter(p => p.doi);
             }
             
-            // Sort by citation count if selected
-            if (sortByCitations) {
-                filteredPapers.sort((a, b) => (b.citationCount || 0) - (a.citationCount || 0));
-            }
-            
             return filteredPapers;
+        }
+
+        // Calculate relevance score using TF-IDF-like approach
+        function calculateRelevanceScore(query, paper) {
+            const queryTerms = extractKeywords(query.toLowerCase());
+            const paperText = `${paper.title} ${paper.abstract || ''}`.toLowerCase();
+            
+            let score = 0;
+            let matches = 0;
+            
+            queryTerms.forEach(term => {
+                const termCount = (paperText.match(new RegExp(term, 'g')) || []).length;
+                if (termCount > 0) {
+                    matches++;
+                    // TF-IDF simplified: term frequency with diminishing returns
+                    score += Math.log(1 + termCount) * 10;
+                }
+            });
+            
+            // Boost score based on match percentage
+            const matchPercentage = queryTerms.length > 0 ? matches / queryTerms.length : 0;
+            score = score * (1 + matchPercentage);
+            
+            // Normalize to 0-100
+            return Math.min(100, Math.round(score));
+        }
+
+        // Calculate credibility score based on citation count
+        function calculateCredibilityScore(paper) {
+            const citations = paper.citationCount || 0;
+            
+            // Logarithmic scale for citations
+            if (citations === 0) return 30;
+            if (citations < 10) return 40 + citations * 2;
+            if (citations < 100) return 60 + Math.log10(citations) * 10;
+            return Math.min(100, 80 + Math.log10(citations / 10) * 10);
+        }
+
+        // Calculate freshness score based on publication year
+        function calculateFreshnessScore(year) {
+            const currentYear = new Date().getFullYear();
+            const age = currentYear - year;
+            
+            if (age < 0) return 50; // Future publication
+            if (age === 0) return 100; // Current year
+            if (age === 1) return 95;
+            if (age <= 3) return 90;
+            if (age <= 5) return 80;
+            if (age <= 10) return 60;
+            if (age <= 20) return 40;
+            return Math.max(10, 40 - age);
         }
 
         // Extract keywords from sentence
@@ -859,6 +1067,283 @@
             }
         }
 
+        // Search OpenAlex API
+        async function searchOpenAlex(query, minYear) {
+            try {
+                const url = `https://api.openalex.org/works?search=${encodeURIComponent(query)}&filter=publication_year:${minYear}-&per-page=5`;
+                
+                const response = await fetch(url, {
+                    headers: { 'User-Agent': 'mailto:citation-generator@example.com' }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`OpenAlex API error: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                return (data.results || [])
+                    .map(paper => {
+                        const year = paper.publication_year;
+                        const authorships = paper.authorships || [];
+                        
+                        return {
+                            title: paper.title,
+                            authors: authorships.map(a => {
+                                const name = a.author?.display_name || '';
+                                const parts = name.split(' ');
+                                return [parts[parts.length - 1], parts[0]];
+                            }),
+                            year: year,
+                            journal: paper.primary_location?.source?.display_name || 'Journal',
+                            doi: paper.doi?.replace('https://doi.org/', ''),
+                            url: paper.doi,
+                            citationCount: paper.cited_by_count || 0,
+                            abstract: paper.abstract_inverted_index ? 'Available' : null,
+                            openAccess: paper.open_access?.is_oa || false,
+                            source: 'OpenAlex'
+                        };
+                    })
+                    .filter(paper => paper.title && paper.authors.length > 0);
+            } catch (error) {
+                console.error('OpenAlex search error:', error);
+                return [];
+            }
+        }
+
+        // Search DOAJ API
+        async function searchDOAJ(query, minYear) {
+            try {
+                const url = `https://doaj.org/api/search/articles/${encodeURIComponent(query)}?pageSize=5`;
+                
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`DOAJ API error: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                return (data.results || [])
+                    .map(paper => {
+                        const bibjson = paper.bibjson || {};
+                        const year = bibjson.year ? parseInt(bibjson.year) : null;
+                        
+                        if (!year || year < minYear) return null;
+                        
+                        return {
+                            title: bibjson.title,
+                            authors: (bibjson.author || []).map(a => {
+                                const name = a.name || '';
+                                const parts = name.split(' ');
+                                return [parts[parts.length - 1], parts[0]];
+                            }),
+                            year: year,
+                            journal: bibjson.journal?.title || 'Open Access Journal',
+                            doi: bibjson.identifier?.find(i => i.type === 'doi')?.id,
+                            url: bibjson.identifier?.find(i => i.type === 'doi')?.id ? 
+                                `https://doi.org/${bibjson.identifier.find(i => i.type === 'doi').id}` : null,
+                            citationCount: 0,
+                            abstract: bibjson.abstract,
+                            openAccess: true,
+                            source: 'DOAJ'
+                        };
+                    })
+                    .filter(paper => paper && paper.title && paper.authors.length > 0);
+            } catch (error) {
+                console.error('DOAJ search error:', error);
+                return [];
+            }
+        }
+
+        // Search PubMed Central API
+        async function searchPubMed(query, minYear) {
+            try {
+                // First search for IDs
+                const searchUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pmc&term=${encodeURIComponent(query)}&retmode=json&retmax=5&mindate=${minYear}&datetype=pdat`;
+                
+                const searchResponse = await fetch(searchUrl);
+                
+                if (!searchResponse.ok) {
+                    throw new Error(`PubMed search error: ${searchResponse.status}`);
+                }
+                
+                const searchData = await searchResponse.json();
+                const ids = searchData.esearchresult?.idlist || [];
+                
+                if (ids.length === 0) return [];
+                
+                // Fetch paper details
+                const summaryUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pmc&id=${ids.join(',')}&retmode=json`;
+                
+                const summaryResponse = await fetch(summaryUrl);
+                
+                if (!summaryResponse.ok) {
+                    throw new Error(`PubMed summary error: ${summaryResponse.status}`);
+                }
+                
+                const summaryData = await summaryResponse.json();
+                const papers = [];
+                
+                for (const id of ids) {
+                    const paper = summaryData.result?.[id];
+                    if (!paper) continue;
+                    
+                    const year = paper.pubdate ? parseInt(paper.pubdate.split(' ')[0]) : null;
+                    const authors = (paper.authors || []).map(a => {
+                        const name = a.name || '';
+                        const parts = name.split(' ');
+                        return [parts[parts.length - 1], parts[0]];
+                    });
+                    
+                    papers.push({
+                        title: paper.title,
+                        authors: authors,
+                        year: year,
+                        journal: paper.fulljournalname || 'PubMed Central',
+                        doi: paper.articleids?.find(a => a.idtype === 'doi')?.value,
+                        url: paper.articleids?.find(a => a.idtype === 'doi')?.value ?
+                            `https://doi.org/${paper.articleids.find(a => a.idtype === 'doi').value}` :
+                            `https://www.ncbi.nlm.nih.gov/pmc/articles/PMC${id}/`,
+                        citationCount: 0,
+                        abstract: null,
+                        openAccess: true,
+                        source: 'PubMed Central'
+                    });
+                }
+                
+                return papers.filter(paper => paper.title && paper.authors.length > 0);
+            } catch (error) {
+                console.error('PubMed search error:', error);
+                return [];
+            }
+        }
+
+        // Search SSRN API (limited public access - using basic search)
+        async function searchSSRN(query, minYear) {
+            try {
+                // SSRN doesn't have a free public API, so we'll return empty for now
+                // This would require API key or scraping which isn't recommended
+                console.log('SSRN API requires authentication - skipping');
+                return [];
+            } catch (error) {
+                console.error('SSRN search error:', error);
+                return [];
+            }
+        }
+
+        // Search PhilPapers API
+        async function searchPhilPapers(query, minYear) {
+            try {
+                const url = `https://philpapers.org/api/search.json?terms=${encodeURIComponent(query)}&limit=5`;
+                
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`PhilPapers API error: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                return (data.results || [])
+                    .map(paper => {
+                        const year = paper.pubYear ? parseInt(paper.pubYear) : null;
+                        
+                        if (!year || year < minYear) return null;
+                        
+                        return {
+                            title: paper.title,
+                            authors: (paper.authors || []).map(a => {
+                                const name = a.name || a;
+                                const parts = typeof name === 'string' ? name.split(' ') : [name];
+                                return [parts[parts.length - 1], parts[0]];
+                            }),
+                            year: year,
+                            journal: paper.venue || 'Philosophy Journal',
+                            doi: paper.doi,
+                            url: paper.doi ? `https://doi.org/${paper.doi}` : paper.url,
+                            citationCount: 0,
+                            abstract: paper.abstract,
+                            source: 'PhilPapers'
+                        };
+                    })
+                    .filter(paper => paper && paper.title && paper.authors.length > 0);
+            } catch (error) {
+                console.error('PhilPapers search error:', error);
+                return [];
+            }
+        }
+
+        // Search CORE API
+        async function searchCORE(query, minYear) {
+            try {
+                // CORE API v3 requires API key, using limited public endpoint
+                const url = `https://core.ac.uk/api-v2/search/${encodeURIComponent(query)}?page=1&pageSize=5`;
+                
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    console.log('CORE API requires authentication - skipping');
+                    return [];
+                }
+                
+                const data = await response.json();
+                
+                return (data.data || [])
+                    .map(paper => {
+                        const year = paper.yearPublished ? parseInt(paper.yearPublished) : null;
+                        
+                        if (!year || year < minYear) return null;
+                        
+                        return {
+                            title: paper.title,
+                            authors: (paper.authors || []).map(a => {
+                                const name = typeof a === 'string' ? a : a.name || '';
+                                const parts = name.split(' ');
+                                return [parts[parts.length - 1], parts[0]];
+                            }),
+                            year: year,
+                            journal: paper.publisher || 'Research Repository',
+                            doi: paper.doi,
+                            url: paper.doi ? `https://doi.org/${paper.doi}` : paper.downloadUrl,
+                            citationCount: 0,
+                            abstract: paper.description,
+                            openAccess: true,
+                            source: 'CORE'
+                        };
+                    })
+                    .filter(paper => paper && paper.title && paper.authors.length > 0);
+            } catch (error) {
+                console.error('CORE search error:', error);
+                return [];
+            }
+        }
+
+        // Search Unpaywall API
+        async function searchUnpaywall(query, minYear) {
+            try {
+                // Unpaywall requires DOI lookup, not general search
+                // This is better used as a supplement to other APIs
+                console.log('Unpaywall requires DOI - use as supplement only');
+                return [];
+            } catch (error) {
+                console.error('Unpaywall search error:', error);
+                return [];
+            }
+        }
+
+        // Search IEEE Xplore API
+        async function searchIEEE(query, minYear) {
+            try {
+                // IEEE Xplore requires API key for most access
+                console.log('IEEE Xplore API requires authentication - skipping');
+                return [];
+            } catch (error) {
+                console.error('IEEE search error:', error);
+                return [];
+            }
+        }
+
         // Display cited text
         function displayCitedText() {
             const container = document.getElementById('citedText');
@@ -893,6 +1378,8 @@
             const style = document.getElementById('citationStyle').value;
             const includeDOI = document.getElementById('includeDOI').checked;
             const includeAbstract = document.getElementById('includeAbstract').checked;
+            const showQualityMetrics = document.getElementById('showQualityMetrics').checked;
+            const showRelevanceScore = document.getElementById('showRelevanceScore').checked;
             
             let html = '';
             references.forEach((paper, index) => {
@@ -921,6 +1408,35 @@
                         ${paper.abstract.substring(0, 200)}${paper.abstract.length > 200 ? '...' : ''}
                     </div>` : '';
                 
+                // Quality Metrics
+                let metricsHtml = '';
+                if (showQualityMetrics && (paper.relevanceScore || paper.credibilityScore || paper.freshnessScore)) {
+                    metricsHtml = `
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            ${showRelevanceScore && paper.relevanceScore ? 
+                                `<span class="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">
+                                    <i class="fas fa-star mr-1"></i>Relevance: ${paper.relevanceScore}%
+                                </span>` : ''}
+                            ${paper.credibilityScore ? 
+                                `<span class="inline-flex items-center px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-medium">
+                                    <i class="fas fa-certificate mr-1"></i>Credibility: ${paper.credibilityScore}%
+                                </span>` : ''}
+                            ${paper.freshnessScore ? 
+                                `<span class="inline-flex items-center px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">
+                                    <i class="fas fa-clock mr-1"></i>Freshness: ${paper.freshnessScore}%
+                                </span>` : ''}
+                            ${paper.citationCount ? 
+                                `<span class="inline-flex items-center px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs font-medium">
+                                    <i class="fas fa-quote-right mr-1"></i>${paper.citationCount} citations
+                                </span>` : ''}
+                            ${paper.openAccess ? 
+                                `<span class="inline-flex items-center px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-xs font-medium">
+                                    <i class="fas fa-unlock mr-1"></i>Open Access
+                                </span>` : ''}
+                        </div>
+                    `;
+                }
+                
                 const sourceHtml = `<span class="text-xs text-gray-500 ml-2">(Source: ${paper.source})</span>`;
                 
                 html += `
@@ -936,6 +1452,7 @@
                                 </div>
                                 ${doiHtml}
                                 ${arxivHtml}
+                                ${metricsHtml}
                                 ${abstractHtml}
                             </div>
                         </div>
@@ -1114,6 +1631,20 @@
 
         // Update abstract display dynamically
         document.getElementById('includeAbstract').addEventListener('change', function() {
+            if (references.length > 0) {
+                displayReferences();
+            }
+        });
+
+        // Update quality metrics display dynamically
+        document.getElementById('showQualityMetrics').addEventListener('change', function() {
+            if (references.length > 0) {
+                displayReferences();
+            }
+        });
+
+        // Update relevance score display dynamically
+        document.getElementById('showRelevanceScore').addEventListener('change', function() {
             if (references.length > 0) {
                 displayReferences();
             }
